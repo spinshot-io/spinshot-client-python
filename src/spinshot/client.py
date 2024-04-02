@@ -6,8 +6,8 @@ from spinshot.variant import VariantResource
 
 
 class SpinshotClient:
-    def __init__(self, secret_key=None, host=None, port=None, use_ssl=None):
-        api_client = RestAPIClient(secret_key, host, port, use_ssl)
+    def __init__(self, config=None):
+        api_client = RestAPIClient(config)
         self.categories = CategoryResource(api_client)
         self.products = ProductResource(api_client)
         self.variants = VariantResource(api_client)

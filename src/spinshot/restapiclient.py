@@ -13,53 +13,58 @@ class RestApiException(Exception):
 
 
 class RestAPIClient:
-    def __init__(self, secret_key=None, host=None, port=None, use_ssl=None):
-        self.secret_key = secret_key
-        self.host = host
-        self.port = port
-        self.use_ssl = use_ssl
-        self.__config()
+    def __init__(self, config=None):
+        self.host = 'api.spinshot.io'
+        self.port = 443
+        self.use_ssl = True
+        self.proto = 'https'
+        self.secret_key = None
 
-    def __config(self):
-        SETTINGS_INI = (
-            Path.home() / '.spinshot' / 'config',
-            Path('/etc/spinshot/config')
-        )
+        if config is None:
+            self.config_files = (
+                Path.home() / '.spinshot' / 'config',
+                Path('/etc/spinshot/config')
+            )
+        else:
+            self.config_files = [
+                Path(config)
+            ]
 
-        config = configparser.ConfigParser()
+        self.configure()
 
-        for config_file in SETTINGS_INI:
+    def configure(self):
+        configured = False
+        for config_file in self.config_files:
             if config_file.exists():
-                config.read(config_file)
+                self.read_config_file(config_file)
+                configured = True
 
-                if self.host is None and config.has_option('default', 'host'):
-                    self.host = config.get('default', 'host')
+        if configured == False:
+            raise RestApiException('config missing')
 
-                if self.port is None and config.has_option('default', 'port'):
-                    self.port = config.get('default', 'port')
+        if self.secret_key is None:
+            raise RestApiException('config has no secret key')
 
-                if self.use_ssl is None and config.has_option('default', 'use_ssl'):
-                    value = config.get('default', 'use_ssl').lower()
-                    self.use_ssl = True if value in ('yes', 'true') else False
+    def read_config_file(self, config_file):
+        config = configparser.ConfigParser()
+        config.read(config_file)
 
-                if self.secret_key is None and config.has_option('default', 'secret_key'):
-                    self.secret_key = config.get('default', 'secret_key')
+        if config.has_option('default', 'host'):
+            self.host = config.get('default', 'host')
 
-        if self.host is None:
-            self.host = 'api.spinshot.io'
+        if config.has_option('default', 'port'):
+            self.port = config.get('default', 'port')
 
-        if self.use_ssl is None:
-            self.use_ssl = True
-
-        if self.port is None:
-            if self.use_ssl is True:
-                self.port = 443
+        if config.has_option('default', 'use_ssl'):
+            value = config.get('default', 'use_ssl').lower()
+            self.use_ssl = True if value in ('yes', 'true') else False
+            if self.use_ssl in ('yes', 'true'):
+                self.proto = 'https'
             else:
-                self.port = 80
+                self.proto = 'http'
 
-    @property
-    def _proto(self):
-        return 'https' if self.use_ssl else 'http'
+        if config.has_option('default', 'secret_key'):
+            self.secret_key = config.get('default', 'secret_key')
 
     def _headers(self):
         return {
@@ -67,7 +72,7 @@ class RestAPIClient:
         }
 
     def list(self, endpoint, params={}):
-        url = f'{self._proto}://{self.host}:{self.port}/{endpoint}/'
+        url = f'{self.proto}://{self.host}:{self.port}/{endpoint}/'
 
         try:
             response = requests.get(url, headers=self._headers(), params=params)
@@ -86,7 +91,7 @@ class RestAPIClient:
         raise RestApiException("Unexpected status code: {}".format(response.status_code))
 
     def retrieve(self, endpoint, pk):
-        url = f'{self._proto}://{self.host}:{self.port}/{endpoint}/{pk}/'
+        url = f'{self.proto}://{self.host}:{self.port}/{endpoint}/{pk}/'
 
         try:
             response = requests.get(url, headers=self._headers())
@@ -105,7 +110,7 @@ class RestAPIClient:
         raise RestApiException("Unexpected status code: {}".format(response.status_code))
 
     def create(self, endpoint, instance):
-        url = f'{self._proto}://{self.host}:{self.port}/{endpoint}/'
+        url = f'{self.proto}://{self.host}:{self.port}/{endpoint}/'
 
         try:
             json = instance.create_json()
@@ -134,7 +139,7 @@ class RestAPIClient:
         raise RestApiException(f"Unexpected status code: {response.status_code}")
 
     def update(self, endpoint, instance):
-        url = f'{self._proto}://{self.host}:{self.port}/{endpoint}/{instance.uid}/'
+        url = f'{self.proto}://{self.host}:{self.port}/{endpoint}/{instance.uid}/'
 
         try:
             json = instance.update_json()
@@ -159,7 +164,7 @@ class RestAPIClient:
         raise RestApiException("Unexpected status code: {}".format(response.status_code))
 
     def delete(self, endpoint, instance):
-        url = f'{self._proto}://{self.host}:{self.port}/{endpoint}/{instance.uid}/'
+        url = f'{self.proto}://{self.host}:{self.port}/{endpoint}/{instance.uid}/'
 
         try:
             response = requests.delete(url, headers=self._headers())

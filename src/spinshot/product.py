@@ -10,7 +10,13 @@ class Product(Model):
         self.title = kwargs.get('title', '')
         self.sku = kwargs.get('sku', '')
         self.meta = kwargs.get('meta', {})
-        self.category = kwargs.get('category', '')
+
+
+        category = kwargs.get('category', '')
+        if isinstance(category, dict):
+            self.category = Category(**category)
+        else:
+            self.category = category
 
     def __setattr__(self, key, value):
         if key == 'category':

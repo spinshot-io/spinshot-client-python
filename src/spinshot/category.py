@@ -6,6 +6,7 @@ from spinshot.restapiclient import RestAPIClient
 class Category(Model):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.uid = kwargs.get('uid', '')
         self.title = kwargs.get('title', '')
         self.meta = kwargs.get('meta', {})
 

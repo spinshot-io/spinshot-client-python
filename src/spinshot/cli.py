@@ -1,7 +1,7 @@
 import argparse
 import glob
 import os
-from argparse import ArgumentError, ArgumentTypeError
+from argparse import ArgumentTypeError
 
 from spinshot.category import Category
 from spinshot.client import SpinshotClient
@@ -9,8 +9,6 @@ from spinshot.image import Image
 from spinshot.product import Product
 from spinshot.restapiclient import RestApiException
 from spinshot.variant import Variant
-
-CLIENT = SpinshotClient()
 
 
 def main_cli():
@@ -20,8 +18,9 @@ def main_cli():
     )
 
     parser.add_argument('-v', '--verbose', help='Increase the verbosity')
+    parser.add_argument('-c', '--config', help='Config file')
 
-    sub_parsers = parser.add_subparsers(help='resource type', dest='resource')
+    sub_parsers = parser.add_subparsers(help='resource type', dest='resource', required=True)
 
     create_category_sub_parsers(sub_parsers)
     create_product_sub_parsers(sub_parsers)
@@ -61,8 +60,13 @@ def main_cli():
         ),
     )
 
+    if args.config is not None:
+        client = SpinshotClient(args.config)
+    else:
+        client = SpinshotClient()
+
     try:
-        handlers[args.resource][args.command](args)
+        handlers[args.resource][args.command](client, args)
     except RestApiException as e:
         print(f"operation failed: {e}")
 
@@ -124,7 +128,7 @@ def create_image_sub_parsers(sub_parsers):
 
 
 def create_default_sub_parsers(parser):
-    sub_parsers = parser.add_subparsers(help='command', dest='command')
+    sub_parsers = parser.add_subparsers(help='command', dest='command', required=True)
 
     list_parser = sub_parsers.add_parser('list', help='list resource')
     list_parser.add_argument('-q', '--query', help='search for text on the resource')
@@ -145,56 +149,56 @@ def create_default_sub_parsers(parser):
     return sub_parsers, list_parser, create_parser, retrieve_parser, update_parser, delete_parser
 
 
-def category_list(args):
-    results = CLIENT.categories.list()
+def category_list(client, args):
+    results = client.categories.list()
     for result in results:
         print(result)
 
 
-def category_create(args):
+def category_create(client, args):
     category = Category(title=args.title)
-    category = CLIENT.categories.create(category)
+    category = client.categories.create(category)
     print(category)
 
 
-def category_retrieve(args):
-    category = CLIENT.categories.retrieve(args.uid)
+def category_retrieve(client, args):
+    category = client.categories.retrieve(args.uid)
     print(category)
 
 
-def category_update(args):
-    category = CLIENT.categories.retrieve(args.uid)
+def category_update(client, args):
+    category = client.categories.retrieve(args.uid)
     if args.title:
         category.title = args.title
-    category = CLIENT.categories.update(category)
+    category = client.categories.update(category)
     print(category)
 
 
-def category_delete(args):
-    category = CLIENT.categories.retrieve(args.uid)
-    CLIENT.categories.delete(category)
+def category_delete(client, args):
+    category = client.categories.retrieve(args.uid)
+    client.categories.delete(category)
     print("category deleted")
 
 
-def product_list(args):
-    results = CLIENT.products.list(category=args.category)
+def product_list(client, args):
+    results = client.products.list(category=args.category)
     for result in results:
         print(result)
 
 
-def product_create(args):
+def product_create(client, args):
     product = Product(title=args.title, sku=args.sku, meta=args.meta, category=args.category)
-    product = CLIENT.products.create(product)
+    product = client.products.create(product)
     print(product)
 
 
-def product_retrieve(args):
-    product = CLIENT.products.retrieve(args.uid)
+def product_retrieve(client, args):
+    product = client.products.retrieve(args.uid)
     print(product)
 
 
-def product_update(args):
-    product = CLIENT.products.retrieve(args.uid)
+def product_update(client, args):
+    product = client.products.retrieve(args.uid)
     if args.title:
         product.title = args.title
 
@@ -207,35 +211,35 @@ def product_update(args):
     if args.category:
         product.category = args.category
 
-    product = CLIENT.products.update(product)
+    product = client.products.update(product)
     print(product)
 
 
-def product_delete(args):
-    product = CLIENT.products.retrieve(args.uid)
-    CLIENT.products.delete(product)
+def product_delete(client, args):
+    product = client.products.retrieve(args.uid)
+    client.products.delete(product)
     print("product deleted")
 
 
-def variant_list(args):
-    results = CLIENT.variants.list(product=args.product)
+def variant_list(client, args):
+    results = client.variants.list(product=args.product)
     for result in results:
         print(result)
 
 
-def variant_create(args):
+def variant_create(client, args):
     variant = Variant(product=args.product, description=args.description, sku=args.sku, meta=args.meta)
-    variant = CLIENT.variants.create(variant)
+    variant = client.variants.create(variant)
     print(variant)
 
 
-def variant_retrieve(args):
-    variant = CLIENT.variants.retrieve(args.uid)
+def variant_retrieve(client, args):
+    variant = client.variants.retrieve(args.uid)
     print(variant)
 
 
-def variant_update(args):
-    variant = CLIENT.variants.retrieve(args.uid)
+def variant_update(client, args):
+    variant = client.variants.retrieve(args.uid)
 
     if args.description:
         variant.description = args.description
@@ -246,23 +250,23 @@ def variant_update(args):
     if args.meta:
         variant.meta = args.meta
 
-    variant = CLIENT.variants.update(variant)
+    variant = client.variants.update(variant)
     print(variant)
 
 
-def variant_delete(args):
-    variant = CLIENT.variants.retrieve(args.uid)
-    CLIENT.variants.delete(variant)
+def variant_delete(client, args):
+    variant = client.variants.retrieve(args.uid)
+    client.variants.delete(variant)
     print("variant deleted")
 
 
-def image_list(args):
-    results = CLIENT.images.list(product=args.product, variant=args.variant)
+def image_list(client, args):
+    results = client.images.list(product=args.product, variant=args.variant)
     for result in results:
         print(result)
 
 
-def image_create(args):
+def image_create(client, args):
     if args.file:
         if not os.path.exists(args.file):
             raise ArgumentTypeError("File does not exist")
@@ -278,30 +282,30 @@ def image_create(args):
             _image_create(args, filename)
 
 
-def _image_create(args, filename):
+def _image_create(client, args, filename):
     image = Image(product=args.product, variant=args.variant, meta=args.meta)
     original_filename = os.path.basename(filename)
     image.set_image(original_filename, open(filename, 'rb'))
-    image = CLIENT.images.create(image)
+    image = client.images.create(image)
     print(image)
 
 
-def image_retrieve(args):
-    image = CLIENT.images.retrieve(args.uid)
+def image_retrieve(client, args):
+    image = client.images.retrieve(args.uid)
     print(image)
 
 
-def image_update(args):
-    image = CLIENT.images.retrieve(args.uid)
+def image_update(client, args):
+    image = client.images.retrieve(args.uid)
 
     if args.meta:
         image.meta = args.meta
 
-    CLIENT.images.update(image)
+    client.images.update(image)
     print(image)
 
 
-def image_delete(args):
-    image = CLIENT.images.retrieve(args.uid)
-    CLIENT.images.delete(image)
+def image_delete(client, args):
+    image = client.images.retrieve(args.uid)
+    client.images.delete(image)
     print("image deleted")
