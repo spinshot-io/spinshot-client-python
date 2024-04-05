@@ -1,6 +1,4 @@
-from spinshot.model import Model
-from spinshot.resource import Resource
-from spinshot.restapiclient import RestAPIClient
+from spinshot.model.base import Model
 
 
 class Category(Model):
@@ -17,21 +15,9 @@ class Category(Model):
                 f'  meta:  {self.meta}\n'
                 ')')
 
-    def create_json(self):
+    def to_dict(self):
         return dict(
+            uid=self.uid,
             title=self.title,
             meta=self.meta
         )
-
-    def update_json(self):
-        return dict(
-            title=self.title,
-            meta=self.meta
-        )
-
-
-class CategoryResource(Resource):
-    def __init__(self, client: RestAPIClient):
-        super().__init__(client)
-        self.endpoint = 'category'
-        self.model = Category

@@ -1,4 +1,4 @@
-from spinshot.model import Model
+from spinshot.model.base import Model
 from spinshot.restapiclient import RestAPIClient
 
 

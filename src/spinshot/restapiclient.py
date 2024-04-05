@@ -113,7 +113,7 @@ class RestAPIClient:
         url = f'{self.proto}://{self.host}:{self.port}/{endpoint}/'
 
         try:
-            json = instance.create_json()
+            json = instance.to_dict()
             if 'files' in json:
                 files = json['files']
                 del json['files']
@@ -142,7 +142,7 @@ class RestAPIClient:
         url = f'{self.proto}://{self.host}:{self.port}/{endpoint}/{instance.uid}/'
 
         try:
-            json = instance.update_json()
+            json = instance.to_dict()
             if 'files' in json:
                 files = json['files']
                 del json['files']

@@ -1,8 +1,8 @@
-from spinshot.category import CategoryResource
-from spinshot.image import ImageResource
-from spinshot.product import ProductResource
+from spinshot.resource.category import CategoryResource
+from spinshot.resource.image import ImageResource
+from spinshot.resource.product import ProductResource
 from spinshot.restapiclient import RestAPIClient
-from spinshot.variant import VariantResource
+from spinshot.resource.variant import VariantResource
 
 
 class SpinshotClient:

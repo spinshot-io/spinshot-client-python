@@ -3,12 +3,12 @@ import glob
 import os
 from argparse import ArgumentTypeError
 
-from spinshot.category import Category
+from spinshot.resource.category import Category
 from spinshot.client import SpinshotClient
-from spinshot.image import Image
-from spinshot.product import Product
+from spinshot.resource.image import Image
+from spinshot.resource.product import Product
 from spinshot.restapiclient import RestApiException
-from spinshot.variant import Variant
+from spinshot.resource.variant import Variant
 
 
 def main_cli():
@@ -157,6 +157,10 @@ def category_list(client, args):
 
 def category_create(client, args):
     category = Category(title=args.title)
+
+    if args.meta:
+        category.meta = args.meta
+
     category = client.categories.create(category)
     print(category)
 
@@ -168,8 +172,13 @@ def category_retrieve(client, args):
 
 def category_update(client, args):
     category = client.categories.retrieve(args.uid)
+
     if args.title:
         category.title = args.title
+
+    if args.meta:
+        category.meta = args.meta
+
     category = client.categories.update(category)
     print(category)
 
