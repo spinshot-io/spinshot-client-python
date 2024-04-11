@@ -19,6 +19,7 @@ def main_cli():
 
     parser.add_argument('-v', '--verbose', help='Increase the verbosity')
     parser.add_argument('-c', '--config', help='Config file')
+    parser.add_argument('-e', '--environment', help='Config file environment', default='default')
 
     sub_parsers = parser.add_subparsers(help='resource type', dest='resource', required=True)
 
@@ -60,15 +61,11 @@ def main_cli():
         ),
     )
 
-    if args.config is not None:
-        client = SpinshotClient(args.config)
-    else:
-        client = SpinshotClient()
-
     try:
+        client = SpinshotClient(args)
         handlers[args.resource][args.command](client, args)
     except RestApiException as e:
-        print(f"operation failed: {e}")
+        print(f"An error occured: {e}")
 
 
 def create_category_sub_parsers(sub_parsers):

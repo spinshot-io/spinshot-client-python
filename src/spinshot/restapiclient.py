@@ -13,22 +13,27 @@ class RestApiException(Exception):
 
 
 class RestAPIClient:
-    def __init__(self, config=None):
+    def __init__(self, args):
         self.host = 'api.spinshot.io'
         self.port = 443
         self.use_ssl = True
         self.proto = 'https'
         self.secret_key = None
 
-        if config is None:
+        if args.config is None:
             self.config_files = (
                 Path.home() / '.spinshot' / 'config',
                 Path('/etc/spinshot/config')
             )
         else:
             self.config_files = [
-                Path(config)
+                Path(args.config)
             ]
+
+        if args.environment:
+            self.environment = args.environment
+        else:
+            self.environment = 'default'
 
         self.configure()
 
@@ -38,32 +43,33 @@ class RestAPIClient:
             if config_file.exists():
                 self.read_config_file(config_file)
                 configured = True
+                break
 
-        if configured == False:
-            raise RestApiException('config missing')
+        if configured is False:
+            raise RestApiException('No config file found')
 
         if self.secret_key is None:
-            raise RestApiException('config has no secret key')
+            raise RestApiException(f'Section {self.environment} in config file {config_file} has no secret key')
 
     def read_config_file(self, config_file):
         config = configparser.ConfigParser()
         config.read(config_file)
 
-        if config.has_option('default', 'host'):
-            self.host = config.get('default', 'host')
+        if config.has_option(self.environment, 'host'):
+            self.host = config.get(self.environment, 'host')
 
-        if config.has_option('default', 'port'):
-            self.port = config.get('default', 'port')
+        if config.has_option(self.environment, 'port'):
+            self.port = config.get(self.environment, 'port')
 
-        if config.has_option('default', 'use_ssl'):
-            value = config.get('default', 'use_ssl').lower()
+        if config.has_option(self.environment, 'use_ssl'):
+            value = config.get(self.environment, 'use_ssl').lower()
             self.use_ssl = True if value in ('yes', 'true') else False
-            if self.use_ssl in ('yes', 'true'):
+            if self.use_ssl is True:
                 self.proto = 'https'
             else:
                 self.proto = 'http'
 
-        if config.has_option('default', 'secret_key'):
+        if config.has_option(self.environment, 'secret_key'):
             self.secret_key = config.get('default', 'secret_key')
 
     def _headers(self):
