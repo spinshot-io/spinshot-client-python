@@ -99,7 +99,7 @@ def create_variant_sub_parsers(sub_parsers):
     list.add_argument('-P', '--product', help='filter by product uid')
 
     create.add_argument('-P', '--product', help='product uid', required=True)
-    create.add_argument('-d', '--description', help='variant description', required=True)
+    create.add_argument('-n', '--name', help='variant name', required=True)
     create.add_argument('-s', '--sku', help='variant sku', default='')
 
     update.add_argument('-d', '--description', help='variant description')
@@ -234,7 +234,7 @@ def variant_list(client, args):
 
 
 def variant_create(client, args):
-    variant = Variant(product=args.product, description=args.description, sku=args.sku, meta=args.meta)
+    variant = Variant(product=args.product, name=args.name, sku=args.sku, meta=args.meta)
     variant = client.variants.create(variant)
     print(variant)
 
@@ -247,8 +247,8 @@ def variant_retrieve(client, args):
 def variant_update(client, args):
     variant = client.variants.retrieve(args.uid)
 
-    if args.description:
-        variant.description = args.description
+    if args.name:
+        variant.name = args.name
 
     if args.sku:
         variant.sku = args.sku
