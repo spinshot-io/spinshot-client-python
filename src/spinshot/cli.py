@@ -285,7 +285,8 @@ def image_create(client, args):
         home = os.path.expanduser("~")
         pattern = args.pattern.replace('~', home)
         for filename in glob.glob(pattern):
-            _image_create(args, filename)
+            print(filename)
+            _image_create(client, args, filename)
 
 
 def _image_create(client, args, filename):

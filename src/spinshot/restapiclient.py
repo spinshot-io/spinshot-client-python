@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 import configparser
@@ -119,13 +120,17 @@ class RestAPIClient:
         url = f'{self.proto}://{self.host}:{self.port}/{endpoint}/'
 
         try:
-            json = instance.to_dict()
-            if 'files' in json:
-                files = json['files']
-                del json['files']
-                response = requests.post(url, data=json, files=files, headers=self._headers())
+            data = instance.to_dict()
+            if 'meta' in data and isinstance(data['meta'], dict):
+                data['meta'] = json.dumps(data['meta'])
+            if 'files' in data:
+                files = data['files']
+                del data['files']
+
+
+                response = requests.post(url, data=data, files=files, headers=self._headers())
             else:
-                response = requests.post(url, json=json, headers=self._headers())
+                response = requests.post(url, json=data, headers=self._headers())
 
         except Exception as e:
             raise RestApiException(e)
