@@ -70,7 +70,7 @@ class RestAPIClient:
                 self.proto = 'http'
 
         if config.has_option(self.environment, 'secret_key'):
-            self.secret_key = config.get('default', 'secret_key')
+            self.secret_key = config.get(self.environment, 'secret_key')
 
     def _headers(self):
         return {
